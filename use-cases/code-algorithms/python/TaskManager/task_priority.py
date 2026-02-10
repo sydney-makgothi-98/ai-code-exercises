@@ -4,6 +4,7 @@ from models import TaskStatus, TaskPriority
 
 def calculate_task_score(task):
     """Calculate a priority score for a task based on multiple factors."""
+    now = datetime.now()
     # Base priority weights
     priority_weights = {
         TaskPriority.LOW: 1,
@@ -17,10 +18,10 @@ def calculate_task_score(task):
 
     # Add due date factor (higher score for tasks due sooner)
     if task.due_date:
-        days_until_due = (task.due_date - datetime.now()).days
+        days_until_due = (task.due_date - now).total_seconds() / 86400
         if days_until_due < 0:  # Overdue tasks
             score += 35
-        elif days_until_due == 0:  # Due today
+        elif days_until_due <= 0:  # Due today
             score += 20
         elif days_until_due <= 2:  # Due in next 2 days
             score += 15
@@ -34,12 +35,13 @@ def calculate_task_score(task):
         score -= 15
 
     # Boost score for tasks with certain tags
-    if any(tag in ["blocker", "critical", "urgent"] for tag in task.tags):
+    tag_set = {tag.lower() for tag in task.tags}
+    if tag_set.intersection({"blocker", "critical", "urgent"}):
         score += 8
 
     # Boost score for recently updated tasks
-    days_since_update = (datetime.now() - task.updated_at).days
-    if days_since_update < 1:
+    seconds_since_update = (now - task.updated_at).total_seconds()
+    if seconds_since_update < 86400:
         score += 5
 
     return score

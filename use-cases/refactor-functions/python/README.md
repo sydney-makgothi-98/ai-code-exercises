@@ -80,3 +80,30 @@ This project is designed as a refactoring exercise. The main `generate_sales_rep
 - Improve code organization and separation of concerns
 - Maintain the same API for backward compatibility
 - Ensure all tests still pass after refactoring
+
+## Refactoring Approach (February 8, 2026)
+
+### Distinct Responsibilities Identified
+- Input validation and date range validation
+- Date range filtering
+- Additional filters application
+- Empty-data handling and early return
+- Metrics calculation (totals, averages, extrema)
+- Grouping and per-group aggregates
+- Base report assembly
+- Detailed transactions enrichment
+- Forecast calculation
+- Chart data generation
+- Output formatting/dispatch
+
+### Decomposition Plan
+1. Extract small pure helpers for validation, filtering, metrics, grouping, and report assembly.
+2. Keep behavior identical by reusing the same logic and data shapes.
+3. Centralize the output format branching in a single helper.
+4. Update `generate_sales_report` to orchestrate helpers in a linear, readable flow.
+
+### Benefits Gained
+- Improved readability: each helper has a clear purpose and name.
+- Easier testing and maintenance: isolated helpers reduce cognitive load.
+- Reduced risk of regression: behavior preserved with the same control flow.
+- Better extensibility: new report features can be added without bloating the main function.

@@ -1,5 +1,5 @@
 # inventory_analysis.py
-def find_product_combinations(products, target_price, price_margin=10):
+def find_product_combinations(products, target_price, price_margin=10, progress_step=100):
     """
     Find all pairs of products where the combined price is within
     the target_price ± price_margin range.
@@ -14,32 +14,29 @@ def find_product_combinations(products, target_price, price_margin=10):
     """
     results = []
 
-    # For each possible pair of products
-    for i in range(len(products)):
-        if i % 100 == 0:
-            print(f"Processing product {i+1} of {len(products)}")
-        for j in range(len(products)):
-            # Skip comparing a product with itself
-            if i != j:
-                product1 = products[i]
-                product2 = products[j]
+    lower_bound = target_price - price_margin
+    upper_bound = target_price + price_margin
+    total_products = len(products)
 
-                # Calculate combined price
-                combined_price = product1['price'] + product2['price']
+    # For each possible pair of products (only evaluate each pair once)
+    for i in range(total_products):
+        if progress_step and i % progress_step == 0:
+            print(f"Processing product {i + 1} of {total_products}")
 
-                # Check if the combined price is within the target range
-                if (target_price - price_margin) <= combined_price <= (target_price + price_margin):
-                    # Avoid duplicates like (product1, product2) and (product2, product1)
-                    if not any(r['product1']['id'] == product2['id'] and
-                               r['product2']['id'] == product1['id'] for r in results):
+        product1 = products[i]
+        price1 = product1['price']
 
-                        pair = {
-                            'product1': product1,
-                            'product2': product2,
-                            'combined_price': combined_price,
-                            'price_difference': abs(target_price - combined_price)
-                        }
-                        results.append(pair)
+        for j in range(i + 1, total_products):
+            product2 = products[j]
+            combined_price = price1 + product2['price']
+
+            if lower_bound <= combined_price <= upper_bound:
+                results.append({
+                    'product1': product1,
+                    'product2': product2,
+                    'combined_price': combined_price,
+                    'price_difference': abs(target_price - combined_price)
+                })
 
     # Sort by price difference from target
     results.sort(key=lambda x: x['price_difference'])

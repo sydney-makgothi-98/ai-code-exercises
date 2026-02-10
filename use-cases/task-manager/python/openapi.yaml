@@ -1,0 +1,145 @@
+openapi: 3.0.3
+info:
+  title: Product API
+  version: 1.0.0
+  description: API for user registration.
+servers:
+  - url: http://localhost:5000
+paths:
+  /api/users/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account and return the created user record.
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserRequest"
+            examples:
+              valid:
+                summary: Valid registration
+                value:
+                  username: jdoe
+                  email: jdoe@example.com
+                  password: S3curePass!
+              invalid_email:
+                summary: Invalid email
+                value:
+                  username: jdoe
+                  email: bad-email
+                  password: short
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RegisterUserResponse"
+              examples:
+                success:
+                  value:
+                    message: User registered successfully
+                    user:
+                      id: 1
+                      username: jdoe
+                      email: jdoe@example.com
+                      created_at: "2026-01-28T12:34:56.789123"
+                      role: user
+        "400":
+          description: Bad request (validation failures)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                missing_field:
+                  value:
+                    error: Missing required field
+                    message: username is required
+                invalid_email:
+                  value:
+                    error: Invalid email
+                    message: Please provide a valid email address
+                weak_password:
+                  value:
+                    error: Weak password
+                    message: Password must be at least 8 characters long
+        "409":
+          description: Conflict (username or email already exists)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                username_taken:
+                  value:
+                    error: Username taken
+                    message: Username is already in use
+                email_exists:
+                  value:
+                    error: Email exists
+                    message: An account with this email already exists
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+              examples:
+                server_error:
+                  value:
+                    error: Server error
+                    message: Failed to register user
+      security: []
+components:
+  schemas:
+    RegisterUserRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          description: Desired username (must be unique).
+          minLength: 1
+        email:
+          type: string
+          format: email
+          description: User email (must be unique).
+        password:
+          type: string
+          description: Raw password (min 8 characters).
+          minLength: 8
+    RegisterUserResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+        role:
+          type: string
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string

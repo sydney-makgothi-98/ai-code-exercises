@@ -1,0 +1,41 @@
+Task Manager + Product API (Python)
+
+Overview
+This project includes a task manager CLI and a minimal Flask API endpoint for user registration. It is intended for learning, experimentation, and small demos.
+
+Features
+- Task CRUD operations and priority scoring
+- JSON file persistence for tasks
+- User registration endpoint with validation
+- SQLite database by default for the API
+
+Project Structure
+- app.py: TaskManager application layer
+- cli.py: CLI entry point
+- models.py: Task and enums
+- storage.py: JSON persistence
+- algo.py: Task scoring/ranking helpers
+- product_API.py: Flask registration endpoint
+- openapi.yaml: OpenAPI spec for the registration endpoint
+
+Requirements
+- Python 3.13+
+- Flask, Flask-SQLAlchemy, Werkzeug, itsdangerous
+
+Quick Start
+1) Create and activate a virtual environment
+2) Install dependencies
+3) Run the API: python product_API.py
+4) Use the CLI: python cli.py --help
+
+Configuration
+- DATABASE_URL: SQLAlchemy database URL (optional)
+- SECRET_KEY: Secret key for token generation (optional)
+
+Known Limitations
+- No auth on the registration endpoint
+- No rate limiting
+- Email sending is a placeholder
+
+License
+Educational/demo use

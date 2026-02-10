@@ -1,4 +1,83 @@
 # Database connection manager with complex initialization
+class BaseConnector:
+    def __init__(self, config):
+        self.config = config
+
+    def connect(self):
+        raise NotImplementedError("Connector must implement connect().")
+
+
+class MySQLConnector(BaseConnector):
+    def connect(self):
+        connection_string = (
+            f"mysql://{self.config.username}:{self.config.password}"
+            f"@{self.config.host}:{self.config.port}/{self.config.database}"
+        )
+        connection_string += f"?charset={self.config.charset}"
+        connection_string += f"&connectionTimeout={self.config.connection_timeout}"
+
+        if self.config.use_ssl:
+            connection_string += "&useSSL=true"
+
+        print(f"MySQL Connection: {connection_string}")
+        return None
+
+
+class PostgreSQLConnector(BaseConnector):
+    def connect(self):
+        connection_string = (
+            f"postgresql://{self.config.username}:{self.config.password}"
+            f"@{self.config.host}:{self.config.port}/{self.config.database}"
+        )
+
+        if self.config.use_ssl:
+            connection_string += "?sslmode=require"
+
+        print(f"PostgreSQL Connection: {connection_string}")
+        return None
+
+
+class MongoDBConnector(BaseConnector):
+    def connect(self):
+        connection_string = (
+            f"mongodb://{self.config.username}:{self.config.password}"
+            f"@{self.config.host}:{self.config.port}/{self.config.database}"
+        )
+        connection_string += f"?retryAttempts={self.config.retry_attempts}"
+        connection_string += f"&poolSize={self.config.pool_size}"
+
+        if self.config.use_ssl:
+            connection_string += "&ssl=true"
+
+        print(f"MongoDB Connection: {connection_string}")
+        return None
+
+
+class RedisConnector(BaseConnector):
+    def connect(self):
+        print(
+            f"Redis Connection: {self.config.host}:"
+            f"{self.config.port}/{self.config.database}"
+        )
+        return None
+
+
+class DatabaseConnectorFactory:
+    _CONNECTORS = {
+        "mysql": MySQLConnector,
+        "postgresql": PostgreSQLConnector,
+        "mongodb": MongoDBConnector,
+        "redis": RedisConnector,
+    }
+
+    @classmethod
+    def create(cls, db_type, config):
+        connector_class = cls._CONNECTORS.get(db_type)
+        if connector_class is None:
+            raise ValueError(f"Unsupported database type: {db_type}")
+        return connector_class(config)
+
+
 class DatabaseConnection:
     def __init__(self, db_type, host, port, username, password, database,
                  use_ssl=False, connection_timeout=30, retry_attempts=3,
@@ -19,47 +98,8 @@ class DatabaseConnection:
     def connect(self):
         print(f"Connecting to {self.db_type} database...")
 
-        if self.db_type == 'mysql':
-            # MySQL connection code
-            connection_string = f"mysql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
-            connection_string += f"?charset={self.charset}"
-            connection_string += f"&connectionTimeout={self.connection_timeout}"
-
-            if self.use_ssl:
-                connection_string += "&useSSL=true"
-
-            print(f"MySQL Connection: {connection_string}")
-            # In a real app, we would: self.connection = mysql.connector.connect(...)
-
-        elif self.db_type == 'postgresql':
-            # PostgreSQL connection code
-            connection_string = f"postgresql://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
-
-            if self.use_ssl:
-                connection_string += "?sslmode=require"
-
-            print(f"PostgreSQL Connection: {connection_string}")
-            # In a real app, we would: self.connection = psycopg2.connect(...)
-
-        elif self.db_type == 'mongodb':
-            # MongoDB connection code
-            connection_string = f"mongodb://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}"
-            connection_string += f"?retryAttempts={self.retry_attempts}"
-            connection_string += f"&poolSize={self.pool_size}"
-
-            if self.use_ssl:
-                connection_string += "&ssl=true"
-
-            print(f"MongoDB Connection: {connection_string}")
-            # In a real app, we would: self.connection = pymongo.MongoClient(...)
-
-        elif self.db_type == 'redis':
-            # Redis connection code
-            print(f"Redis Connection: {self.host}:{self.port}/{self.database}")
-            # In a real app, we would: self.connection = redis.Redis(...)
-
-        else:
-            raise ValueError(f"Unsupported database type: {self.db_type}")
+        connector = DatabaseConnectorFactory.create(self.db_type, self)
+        self.connection = connector.connect()
 
         print("Connection successful!")
         return self.connection
